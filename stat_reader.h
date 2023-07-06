@@ -1,10 +1,11 @@
 #pragma once
 
 #include "transport_catalogue.h"
+#include "input_reader.h"
 
 #include <string>
 #include <vector>
 
-std::vector<std::string> ReadingUserRequests();
+const std::vector<Request> ReadingUserRequests();
 
-void ProcessingUserRequests(TransportCatalogue &catalogue, const std::vector<std::string> &requests);
+void ProcessingUserRequests(TransportCatalogue &catalogue, const std::vector<Request> &requests);

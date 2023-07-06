@@ -1,8 +1,8 @@
 #include "transport_catalogue.h"
 
 #include <iostream>
-#include <unordered_set>
 #include <iomanip>
+#include <algorithm>
 
 void TransportCatalogue::AddStop(Stop stop)
 {
@@ -13,7 +13,13 @@ void TransportCatalogue::AddStop(Stop stop)
 void TransportCatalogue::AddBus(Bus bus)
 {
     buses_.push_back(bus);
-    busname_to_bus_.insert({buses_.back().name, &buses_.back()});
+    const Bus *bus_ptr = &buses_.back();
+    busname_to_bus_.insert({buses_.back().name, bus_ptr});
+
+    for (const Stop* stop : bus_ptr->stops)
+    {
+        stopname_to_buses_[stop->name].insert(bus_ptr->name);
+    }
 }
 
 const Stop *TransportCatalogue::GetStopByName(std::string_view name) const
@@ -39,6 +45,15 @@ BusInfo TransportCatalogue::GetBusInfo(std::string_view name)
         return {bus->stops.size(), UniqueStopsCount(name), ComputeGeoRouteLength(name)};
     else
         return {bus->stops.size() * 2 - 1, UniqueStopsCount(name), ComputeGeoRouteLength(name)};
+}
+
+std::unordered_set<std::string_view> TransportCatalogue::GetStopInfo(std::string_view name) const
+{
+    if (stopname_to_buses_.count(name) > 0)
+    {
+        return stopname_to_buses_.at(name);
+    }
+    return {};
 }
 
 size_t TransportCatalogue::UniqueStopsCount(std::string_view name) const

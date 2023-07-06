@@ -3,7 +3,7 @@
 #include <iostream>
 #include <sstream>
 
-std::vector<Request> ReadingRequests()
+const std::vector<Request> ReadingRequests()
 {
     std::vector<Request> requests;
     std::string request;

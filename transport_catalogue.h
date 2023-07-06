@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 #include <deque>
+#include <set>
+#include <unordered_set>
 #include <unordered_map>
 
 struct Stop
@@ -36,6 +38,9 @@ private:
     std::deque<Bus> buses_;
     std::unordered_map<std::string_view, const Bus *> busname_to_bus_;
 
+    //std::unordered_map<std::string_view, std::unordered_set<const Bus *>> stopname_to_buses_;
+    std::unordered_map<std::string_view, std::unordered_set<std::string_view>> stopname_to_buses_;
+
     double ComputeGeoRouteLength(std::string_view name) const;
 
     size_t UniqueStopsCount(std::string_view name) const;
@@ -53,6 +58,8 @@ public:
     const Bus *GetBusByName(std::string_view name) const;
 
     BusInfo GetBusInfo(std::string_view name);
+
+    std::unordered_set<std::string_view>  GetStopInfo(std::string_view name) const;
 
     void PrintStops() const;
 
