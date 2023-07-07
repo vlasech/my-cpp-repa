@@ -9,3 +9,7 @@
 const std::vector<Request> ReadingUserRequests();
 
 void ProcessingUserRequests(TransportCatalogue &catalogue, const std::vector<Request> &requests);
+
+void UserBusRequest(TransportCatalogue &catalogue, const Request &request);
+
+void UserStopRequest(TransportCatalogue &catalogue, const Request &request);

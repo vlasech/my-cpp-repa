@@ -13,6 +13,7 @@ struct Stop
 {
     std::string name;
     Coordinates coordinates;
+//    std::unordered_map<std::string_view, int> distances;
 };
 
 struct Bus
@@ -38,8 +39,9 @@ private:
     std::deque<Bus> buses_;
     std::unordered_map<std::string_view, const Bus *> busname_to_bus_;
 
-    //std::unordered_map<std::string_view, std::unordered_set<const Bus *>> stopname_to_buses_;
-    std::unordered_map<std::string_view, std::unordered_set<std::string_view>> stopname_to_buses_;
+    std::unordered_map<std::string_view, std::unordered_set<const Bus *>> stopname_to_buses_;
+
+    //    std::unordered_map<std::string_view, std::unordered_set<std::string_view>> stopname_to_buses_;
 
     double ComputeGeoRouteLength(std::string_view name) const;
 
@@ -59,7 +61,7 @@ public:
 
     BusInfo GetBusInfo(std::string_view name);
 
-    std::unordered_set<std::string_view>  GetStopInfo(std::string_view name) const;
+    std::unordered_set<const Bus *> GetStopInfo(std::string_view name) const;
 
     void PrintStops() const;
 

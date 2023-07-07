@@ -18,7 +18,7 @@ void TransportCatalogue::AddBus(Bus bus)
 
     for (const Stop* stop : bus_ptr->stops)
     {
-        stopname_to_buses_[stop->name].insert(bus_ptr->name);
+        stopname_to_buses_[stop->name].insert(bus_ptr);
     }
 }
 
@@ -47,7 +47,7 @@ BusInfo TransportCatalogue::GetBusInfo(std::string_view name)
         return {bus->stops.size() * 2 - 1, UniqueStopsCount(name), ComputeGeoRouteLength(name)};
 }
 
-std::unordered_set<std::string_view> TransportCatalogue::GetStopInfo(std::string_view name) const
+std::unordered_set<const Bus*> TransportCatalogue::GetStopInfo(std::string_view name) const
 {
     if (stopname_to_buses_.count(name) > 0)
     {
