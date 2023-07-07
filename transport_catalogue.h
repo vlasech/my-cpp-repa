@@ -8,12 +8,12 @@
 #include <set>
 #include <unordered_set>
 #include <unordered_map>
+#include <cstdint>
 
 struct Stop
 {
     std::string name;
     Coordinates coordinates;
-//    std::unordered_map<std::string_view, int> distances;
 };
 
 struct Bus
@@ -28,6 +28,21 @@ struct BusInfo
     size_t stops_count;       // количество остановок в маршруте автобуса от stop1 до stop1 включительно
     size_t unique_stop_count; // количество уникальных остановок, на которых останавливается автобус
     double geo_route_length;  // длина маршрута в метрах (географическая)
+    int32_t real_route_length;    // длина маршрута в метрах (реальная)
+};
+
+struct Hasher {
+    size_t operator()(const std::pair<const Stop *, const Stop *> &pair) const {
+        std::hash<const void *> pointer_hash;
+        return pointer_hash(pair.first) ^ (pointer_hash(pair.second) << 1);
+    }
+};
+
+struct Distance
+{
+    std::string stop1;
+    std::string stop2;
+    uint32_t distance;
 };
 
 class TransportCatalogue
@@ -41,9 +56,11 @@ private:
 
     std::unordered_map<std::string_view, std::unordered_set<const Bus *>> stopname_to_buses_;
 
-    //    std::unordered_map<std::string_view, std::unordered_set<std::string_view>> stopname_to_buses_;
+    std::unordered_map<std::pair<const Stop *, const Stop *>, int32_t, Hasher> distances_between_stops_;
 
     double ComputeGeoRouteLength(std::string_view name) const;
+
+    uint32_t ComputeRealRouteLength(std::string_view name) const;
 
     size_t UniqueStopsCount(std::string_view name) const;
 
@@ -52,6 +69,8 @@ public:
     ~TransportCatalogue() = default;
 
     void AddStop(Stop stop);
+
+    void AddDistance(Distance distances_between_stops);
 
     void AddBus(Bus bus);
 
@@ -62,6 +81,8 @@ public:
     BusInfo GetBusInfo(std::string_view name);
 
     std::unordered_set<const Bus *> GetStopInfo(std::string_view name) const;
+
+    uint32_t GetDistance(const Stop* stop1, const Stop* stop2) const;
 
     void PrintStops() const;
 

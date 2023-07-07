@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <iomanip>
 
 const std::vector<Request> ReadingUserRequests()
 {
@@ -29,9 +30,11 @@ void UserBusRequest(TransportCatalogue &catalogue, const Request &request)
     else
     {
         auto result = catalogue.GetBusInfo(request.data);
-        std::cout << result.stops_count << " stops on route, "
+        std::cout << std::setprecision(6)
+                  << result.stops_count << " stops on route, "
                   << result.unique_stop_count << " unique stops, "
-                  << result.geo_route_length << " route length"
+                  << result.real_route_length << " route length, "
+                  << result.real_route_length / result.geo_route_length << " curvature"
                   << std::endl;
     }
 }
