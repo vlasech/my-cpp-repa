@@ -5,24 +5,30 @@
 #include <string>
 #include <tuple>
 
-enum class RequestType
+namespace transport
 {
-    STOP,
-    BUS
-};
+    namespace detail
+    {
+        enum class RequestType
+        {
+            STOP,
+            BUS
+        };
 
-struct Request
-{
-    RequestType type;
-    std::string data;
-};
+        struct Request
+        {
+            RequestType type;
+            std::string data;
+        };
 
-const std::vector<Request> ReadingRequests();
+        const std::vector<Request> ReadRequests(std::istream& in);
 
-void ProcessingRequests(TransportCatalogue &catalogue, const std::vector<Request> &requests);
+        void ProcessRequests(TransportCatalogue &catalogue, const std::vector<Request> &requests);
 
-std::tuple<Stop, std::vector<Distance>> ParseStopRequest(const std::string &request);
+        std::tuple<Stop, std::vector<Distance>> ParseStopRequest(const std::string &request);
 
-std::tuple<Stop, std::vector<Distance>> ParseStopRequestWithDistence(const std::string &request, Stop stop, size_t it);
+        std::tuple<Stop, std::vector<Distance>> ParseStopRequestWithDistence(const std::string &request, Stop stop, size_t it);
 
-Bus ParseBusRequest(const std::string &request, TransportCatalogue &catalogue);
+        Bus ParseBusRequest(const std::string &request, TransportCatalogue &catalogue);
+    }
+}

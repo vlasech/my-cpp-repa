@@ -4,156 +4,141 @@
 #include <iomanip>
 #include <algorithm>
 
-void TransportCatalogue::AddStop(Stop stop)
+namespace transport
 {
-    stops_.push_back(stop);
-    stopname_to_stop_.insert({stops_.back().name, &stops_.back()});
-}
-
-void TransportCatalogue::AddDistance(Distance distances_between_stops)
-{
-    const Stop *stop1_ptr = GetStopByName(distances_between_stops.stop1);
-    const Stop *stop2_ptr = GetStopByName(distances_between_stops.stop2);
-
-    distances_between_stops_.insert({std::make_pair(stop1_ptr, stop2_ptr), distances_between_stops.distance});
-}
-
-void TransportCatalogue::AddBus(Bus bus)
-{
-    buses_.push_back(bus);
-    const Bus *bus_ptr = &buses_.back();
-    busname_to_bus_.insert({buses_.back().name, bus_ptr});
-
-    for (const Stop *stop : bus_ptr->stops)
+    using namespace detail;
+    
+    void TransportCatalogue::AddStop(const Stop &stop)
     {
-        stopname_to_buses_[stop->name].insert(bus_ptr);
+        stops_.push_back(stop);
+        stopname_to_stop_.insert({stops_.back().name, &stops_.back()});
     }
-}
 
-const Stop *TransportCatalogue::GetStopByName(std::string_view name) const
-{
-    auto it = stopname_to_stop_.find(name);
-    return it == stopname_to_stop_.end() ? nullptr : it->second;
-}
-
-const Bus *TransportCatalogue::GetBusByName(std::string_view name) const
-{
-    auto it = busname_to_bus_.find(name);
-    return it == busname_to_bus_.end() ? nullptr : it->second;
-}
-
-BusInfo TransportCatalogue::GetBusInfo(std::string_view name)
-{
-    BusInfo bus_info;
-    const Bus *bus = GetBusByName(name);
-
-    if (bus->is_circular)
-        bus_info.stops_count = bus->stops.size();
-    else
-        bus_info.stops_count = bus->stops.size() * 2 - 1;
-
-    bus_info.unique_stop_count = UniqueStopsCount(name);
-    bus_info.real_route_length = ComputeRealRouteLength(name);
-    bus_info.geo_route_length = ComputeGeoRouteLength(name);
-
-    return bus_info;
-}
-
-std::unordered_set<const Bus *> TransportCatalogue::GetStopInfo(std::string_view name) const
-{
-    if (stopname_to_buses_.count(name) > 0)
+    void TransportCatalogue::AddDistance(Distance distances_between_stops)
     {
-        return stopname_to_buses_.at(name);
+        const Stop *stop1_ptr = GetStopByName(distances_between_stops.stop1);
+        const Stop *stop2_ptr = GetStopByName(distances_between_stops.stop2);
+
+        distances_between_stops_.insert({std::make_pair(stop1_ptr, stop2_ptr), distances_between_stops.distance});
     }
-    return {};
-}
 
-uint32_t TransportCatalogue::GetDistance(const Stop *stop1, const Stop *stop2) const
-{
-    auto it = distances_between_stops_.find({stop1, stop2});
+    void TransportCatalogue::AddBus(const Bus &bus)
+    {
+        buses_.push_back(bus);
+        const Bus *bus_ptr = &buses_.back();
+        busname_to_bus_.insert({buses_.back().name, bus_ptr});
 
-    if (it != distances_between_stops_.end())
-    {
-        return it->second;
-    }
-    else
-    {
-        it = distances_between_stops_.find({stop2, stop1});
-        return it->second;
-    }
-}
-
-size_t TransportCatalogue::UniqueStopsCount(std::string_view name) const
-{
-    std::unordered_set<std::string_view> unique_stops;
-    for (const auto &stop : busname_to_bus_.at(name)->stops)
-    {
-        unique_stops.insert(stop->name);
-    }
-    return unique_stops.size();
-}
-
-double TransportCatalogue::ComputeGeoRouteLength(std::string_view name) const
-{
-    const Bus *bus = GetBusByName(name);
-    double geo_route_length = 0;
-    for (auto it = bus->stops.begin(); it + 1 != bus->stops.end(); ++it)
-    {
-        if (bus->is_circular)
+        for (const Stop *stop : bus_ptr->stops)
         {
-            geo_route_length += ComputeDistance((*it)->coordinates, (*(it + 1))->coordinates);
+            stopname_to_buses_[stop->name].insert(bus_ptr);
+        }
+
+        std::unordered_set<std::string_view> unique_stops;
+        for (const auto &stop : bus.stops) {
+            unique_stops.insert(stop->name);
+        }
+        busname_to_unique_stops_[buses_.back().name] = unique_stops.size();
+    }
+
+    const Stop *TransportCatalogue::GetStopByName(std::string_view name) const
+    {
+        auto it = stopname_to_stop_.find(name);
+        return it == stopname_to_stop_.end() ? nullptr : it->second;
+    }
+
+    const Bus *TransportCatalogue::GetBusByName(std::string_view name) const
+    {
+        auto it = busname_to_bus_.find(name);
+        return it == busname_to_bus_.end() ? nullptr : it->second;
+    }
+
+    BusInfo TransportCatalogue::GetBusInfo(std::string_view name)
+    {
+        BusInfo bus_info;
+        const Bus *bus = GetBusByName(name);
+
+        if (bus->is_circular)
+            bus_info.stops_count = bus->stops.size();
+        else
+            bus_info.stops_count = bus->stops.size() * 2 - 1;
+
+        bus_info.unique_stop_count = GetUniqueStopsCount(name);
+        bus_info.real_route_length = ComputeRealRouteLength(name);
+        bus_info.geo_route_length = ComputeGeoRouteLength(name);
+
+        return bus_info;
+    }
+
+    std::unordered_set<const Bus *> TransportCatalogue::GetStopInfo(std::string_view name) const
+    {
+        if (stopname_to_buses_.count(name) > 0)
+        {
+            return stopname_to_buses_.at(name);
+        }
+        return {};
+    }
+
+    uint32_t TransportCatalogue::GetDistance(const Stop *stop1, const Stop *stop2) const
+    {
+        auto it = distances_between_stops_.find({stop1, stop2});
+
+        if (it != distances_between_stops_.end())
+        {
+            return it->second;
         }
         else
         {
-            geo_route_length += ComputeDistance((*it)->coordinates, (*(it + 1))->coordinates) * 2;
+            it = distances_between_stops_.find({stop2, stop1});
+            return it->second;
         }
     }
 
-    if (bus->is_circular)
+    size_t TransportCatalogue::GetUniqueStopsCount(std::string_view name) const
     {
-        geo_route_length += ComputeDistance((*(bus->stops.end() - 1))->coordinates, (*bus->stops.begin())->coordinates);
-    }
-    return geo_route_length;
-}
-
-uint32_t TransportCatalogue::ComputeRealRouteLength(std::string_view name) const
-{
-    const Bus *bus = GetBusByName(name);
-
-    uint32_t real_length = 0;
-    for (size_t i = 0; i < bus->stops.size() - 1; ++i)
-    {
-        real_length += GetDistance(bus->stops[i], bus->stops[i + 1]);
+        return busname_to_unique_stops_.at(name);
     }
 
-    if (!bus->is_circular)
+    double TransportCatalogue::ComputeGeoRouteLength(std::string_view name) const
     {
-        for (size_t i = bus->stops.size() - 1; i > 0; --i)
+        const Bus *bus = GetBusByName(name);
+        double geo_route_length = 0;
+        for (auto it = bus->stops.begin(); it + 1 != bus->stops.end(); ++it)
         {
-            real_length += GetDistance(bus->stops[i], bus->stops[i - 1]);
+            if (bus->is_circular)
+            {
+                geo_route_length += ComputeDistance((*it)->transport::Stop::coordinates, (*(it + 1))->transport::Stop::coordinates);
+            }
+            else
+            {
+                geo_route_length += ComputeDistance((*it)->transport::Stop::coordinates, (*(it + 1))->transport::Stop::coordinates) * 2;
+            }
         }
-    }
 
-    return real_length;
-}
-
-void TransportCatalogue::PrintStops() const
-{
-    for (const auto &stop : stops_)
-    {
-        std::cout << stop.name << std::endl;
-    }
-}
-
-void TransportCatalogue::PrintBuses() const
-{
-    for (const auto &bus : buses_)
-    {
-        std::cout << "Bus name: " << bus.name << ", stops: ";
-        for (const auto &stop : bus.stops)
+        if (bus->is_circular)
         {
-            std::cout << stop->name << " ";
+            geo_route_length += ComputeDistance((*(bus->stops.end() - 1))->coordinates, (*bus->stops.begin())->coordinates);
         }
-        std::cout << "\n";
+        return geo_route_length;
+    }
+
+    uint32_t TransportCatalogue::ComputeRealRouteLength(std::string_view name) const
+    {
+        const Bus *bus = GetBusByName(name);
+
+        uint32_t real_length = 0;
+        for (size_t i = 0; i < bus->stops.size() - 1; ++i)
+        {
+            real_length += GetDistance(bus->stops[i], bus->stops[i + 1]);
+        }
+
+        if (!bus->is_circular)
+        {
+            for (size_t i = bus->stops.size() - 1; i > 0; --i)
+            {
+                real_length += GetDistance(bus->stops[i], bus->stops[i - 1]);
+            }
+        }
+
+        return real_length;
     }
 }

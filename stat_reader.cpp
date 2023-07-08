@@ -4,66 +4,72 @@
 #include <algorithm>
 #include <iomanip>
 
-const std::vector<Request> ReadingUserRequests()
+namespace transport
 {
-    return ReadingRequests();
-}
-
-void ProcessingUserRequests(TransportCatalogue &catalogue, const std::vector<Request> &requests)
-{
-    for (const auto &request : requests)
+    namespace detail
     {
-        if (request.type == RequestType::BUS)
-            UserBusRequest(catalogue, request);
-        if (request.type == RequestType::STOP)
-            UserStopRequest(catalogue, request);
-    }
-}
-
-void UserBusRequest(TransportCatalogue &catalogue, const Request &request)
-{
-    std::cout << "Bus " << request.data << ": ";
-    if (!catalogue.GetBusByName(request.data))
-    {
-        std::cout << "not found" << std::endl;
-    }
-    else
-    {
-        auto result = catalogue.GetBusInfo(request.data);
-        std::cout << std::setprecision(6)
-                  << result.stops_count << " stops on route, "
-                  << result.unique_stop_count << " unique stops, "
-                  << result.real_route_length << " route length, "
-                  << result.real_route_length / result.geo_route_length << " curvature"
-                  << std::endl;
-    }
-}
-
-void UserStopRequest(TransportCatalogue &catalogue, const Request &request)
-{
-    std::cout << "Stop " << request.data << ": ";
-    if (!catalogue.GetStopByName(request.data))
-    {
-        std::cout << "not found" << std::endl;
-    }
-    else
-    {
-        std::unordered_set<const Bus *> result = catalogue.GetStopInfo(request.data);
-        if (result.empty())
+        const std::vector<Request> ReadUserRequests(std::istream& in)
         {
-            std::cout << "no buses" << std::endl;
+            return ReadRequests(in);
         }
-        else
+
+        void ProcessUserRequests(TransportCatalogue &catalogue, const std::vector<Request> &requests, std::ostream& out)
         {
-            std::cout << "buses ";
-            std::vector<const Bus *> buses(result.begin(), result.end());
-            std::sort(buses.begin(), buses.end(), [](const Bus *lhs, const Bus *rhs)
-                      { return lhs->name < rhs->name; });
-            for (auto bus : buses)
+            for (const auto &request : requests)
             {
-                std::cout << bus->name << " ";
+                if (request.type == RequestType::BUS)
+                    UserBusRequest(catalogue, request, out);
+                if (request.type == RequestType::STOP)
+                    UserStopRequest(catalogue, request, out);
             }
-            std::cout << std::endl;
+        }
+
+        void UserBusRequest(TransportCatalogue &catalogue, const Request &request, std::ostream& out)
+        {
+            out << "Bus " << request.data << ": ";
+            if (!catalogue.GetBusByName(request.data))
+            {
+                out << "not found" << std::endl;
+            }
+            else
+            {
+                auto result = catalogue.GetBusInfo(request.data);
+                out << std::setprecision(6)
+                          << result.stops_count << " stops on route, "
+                          << result.unique_stop_count << " unique stops, "
+                          << result.real_route_length << " route length, "
+                          << result.real_route_length / result.geo_route_length << " curvature"
+                          << std::endl;
+            }
+        }
+
+        void UserStopRequest(TransportCatalogue &catalogue, const Request &request, std::ostream& out)
+        {
+            out << "Stop " << request.data << ": ";
+            if (!catalogue.GetStopByName(request.data))
+            {
+                out << "not found" << std::endl;
+            }
+            else
+            {
+                std::unordered_set<const Bus *> result = catalogue.GetStopInfo(request.data);
+                if (result.empty())
+                {
+                    out << "no buses" << std::endl;
+                }
+                else
+                {
+                    out << "buses ";
+                    std::vector<const Bus *> buses(result.begin(), result.end());
+                    std::sort(buses.begin(), buses.end(), [](const Bus *lhs, const Bus *rhs)
+                              { return lhs->name < rhs->name; });
+                    for (auto bus : buses)
+                    {
+                        out << bus->name << " ";
+                    }
+                    out << std::endl;
+                }
+            }
         }
     }
 }

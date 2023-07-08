@@ -1,6 +1,0 @@
-3
-Stop Stop Name 1: 55.6111, 37.2082, 1000m to Stop Name 2
-Stop Stop Name 2: 55.5958, 37.2097
-Bus Bus: Stop Name 1 - Stop Name 2
-1
-Bus Bus

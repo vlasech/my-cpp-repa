@@ -6,10 +6,16 @@
 #include <string>
 #include <vector>
 
-const std::vector<Request> ReadingUserRequests();
+namespace transport
+{
+    namespace detail
+    {
+        const std::vector<Request> ReadUserRequests(std::istream& in);
 
-void ProcessingUserRequests(TransportCatalogue &catalogue, const std::vector<Request> &requests);
+        void ProcessUserRequests(TransportCatalogue &catalogue, const std::vector<Request> &requests, std::ostream& out);
 
-void UserBusRequest(TransportCatalogue &catalogue, const Request &request);
+        void UserBusRequest(TransportCatalogue &catalogue, const Request &request, std::ostream& out);
 
-void UserStopRequest(TransportCatalogue &catalogue, const Request &request);
+        void UserStopRequest(TransportCatalogue &catalogue, const Request &request, std::ostream& out);
+    }
+}

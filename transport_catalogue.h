@@ -10,81 +10,84 @@
 #include <unordered_map>
 #include <cstdint>
 
-struct Stop
+namespace transport
 {
-    std::string name;
-    Coordinates coordinates;
-};
+    struct Stop
+    {
+        std::string name;
+        detail::Coordinates coordinates;
+    };
 
-struct Bus
-{
-    std::string name;
-    std::vector<const Stop *> stops;
-    bool is_circular;
-};
+    struct Bus
+    {
+        std::string name;
+        std::vector<const Stop *> stops;
+        bool is_circular;
+    };
 
-struct BusInfo
-{
-    size_t stops_count;       // количество остановок в маршруте автобуса от stop1 до stop1 включительно
-    size_t unique_stop_count; // количество уникальных остановок, на которых останавливается автобус
-    double geo_route_length;  // длина маршрута в метрах (географическая)
-    int32_t real_route_length;    // длина маршрута в метрах (реальная)
-};
+    struct BusInfo
+    {
+        size_t stops_count;        // количество остановок в маршруте автобуса от stop1 до stop1 включительно
+        size_t unique_stop_count;  // количество уникальных остановок, на которых останавливается автобус
+        double geo_route_length;   // длина маршрута в метрах (географическая)
+        int32_t real_route_length; // длина маршрута в метрах (реальная)
+    };
 
-struct Hasher {
-    size_t operator()(const std::pair<const Stop *, const Stop *> &pair) const {
-        std::hash<const void *> pointer_hash;
-        return pointer_hash(pair.first) ^ (pointer_hash(pair.second) << 1);
-    }
-};
+    struct Hasher
+    {
+        size_t operator()(const std::pair<const Stop *, const Stop *> &pair) const
+        {
+            std::hash<const void *> pointer_hash;
+            return pointer_hash(pair.first) ^ (pointer_hash(pair.second) << 1);
+        }
+    };
 
-struct Distance
-{
-    std::string stop1;
-    std::string stop2;
-    uint32_t distance;
-};
+    struct Distance
+    {
+        std::string stop1;
+        std::string stop2;
+        uint32_t distance;
+    };
 
-class TransportCatalogue
-{
-private:
-    std::deque<Stop> stops_;
-    std::unordered_map<std::string_view, const Stop *> stopname_to_stop_;
+    class TransportCatalogue
+    {
+    private:
+        std::deque<Stop> stops_;
+        std::unordered_map<std::string_view, const Stop *> stopname_to_stop_;
 
-    std::deque<Bus> buses_;
-    std::unordered_map<std::string_view, const Bus *> busname_to_bus_;
+        std::deque<Bus> buses_;
+        std::unordered_map<std::string_view, const Bus *> busname_to_bus_;
 
-    std::unordered_map<std::string_view, std::unordered_set<const Bus *>> stopname_to_buses_;
+        std::unordered_map<std::string_view, std::unordered_set<const Bus *>> stopname_to_buses_;
 
-    std::unordered_map<std::pair<const Stop *, const Stop *>, int32_t, Hasher> distances_between_stops_;
+        std::unordered_map<std::pair<const Stop *, const Stop *>, int32_t, Hasher> distances_between_stops_;
 
-    double ComputeGeoRouteLength(std::string_view name) const;
+        std::unordered_map<std::string_view, size_t> busname_to_unique_stops_;
 
-    uint32_t ComputeRealRouteLength(std::string_view name) const;
+        double ComputeGeoRouteLength(std::string_view name) const;
 
-    size_t UniqueStopsCount(std::string_view name) const;
+        uint32_t ComputeRealRouteLength(std::string_view name) const;
 
-public:
-    TransportCatalogue() = default;
-    ~TransportCatalogue() = default;
+        size_t GetUniqueStopsCount(std::string_view name) const;
 
-    void AddStop(Stop stop);
+    public:
+        TransportCatalogue() = default;
+        ~TransportCatalogue() = default;
 
-    void AddDistance(Distance distances_between_stops);
+        void AddStop(const Stop &stop);
 
-    void AddBus(Bus bus);
+        void AddDistance(Distance distances_between_stops);
 
-    const Stop *GetStopByName(std::string_view name) const;
+        void AddBus(const Bus &bus);
 
-    const Bus *GetBusByName(std::string_view name) const;
+        const Stop *GetStopByName(std::string_view name) const;
 
-    BusInfo GetBusInfo(std::string_view name);
+        const Bus *GetBusByName(std::string_view name) const;
 
-    std::unordered_set<const Bus *> GetStopInfo(std::string_view name) const;
+        BusInfo GetBusInfo(std::string_view name);
 
-    uint32_t GetDistance(const Stop* stop1, const Stop* stop2) const;
+        std::unordered_set<const Bus *> GetStopInfo(std::string_view name) const;
 
-    void PrintStops() const;
-
-    void PrintBuses() const;
-};
+        uint32_t GetDistance(const Stop *stop1, const Stop *stop2) const;
+    };
+}

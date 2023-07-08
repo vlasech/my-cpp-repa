@@ -2,6 +2,8 @@
 #include "input_reader.h"
 #include "stat_reader.h"
 
+#include <iostream>
+
 //#include <gtest/gtest.h>
 
 /*
@@ -51,11 +53,12 @@ TEST(TransportCatalogueTest, TestGetNonexistentBus)
 */
 int main()
 {
+    using namespace transport;
     TransportCatalogue catalogue;
 
-    ProcessingRequests(catalogue, ReadingRequests());
+    detail::ProcessRequests(catalogue, detail::ReadRequests(std::cin));
 
-    ProcessingUserRequests(catalogue, ReadingUserRequests());
+    detail::ProcessUserRequests(catalogue, detail::ReadUserRequests(std::cin), std::cout);
 
     return 0;
 }
